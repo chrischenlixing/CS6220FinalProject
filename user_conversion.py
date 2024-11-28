@@ -363,7 +363,7 @@ def get_ClickThroughRate_analyze2():
     plt.gca().spines["left"].set_linewidth(2)
     plt.gca().spines["right"].set_linewidth(2) 
 
-    plt.title("各点击率区间Number of People及转化率分布",size=16)
+    plt.title("Distribution of Number of People and Conversion Rates Across Click-Through Rate Intervals", size=16)
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     fig.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
@@ -375,12 +375,12 @@ def get_WebsiteVisits_analyze1():
     filename = 'fig/8-WebsiteVisits_analyze1.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
-    axis1.set_xlabel('访问网站总次数', color=color1, fontsize=size)
+    axis1.set_xlabel('Total Number of Website Visits', color=color1, fontsize=size)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
     axis1.tick_params('both', colors=color1, labelsize=size)
     sns.histplot(df['WebsiteVisits'], kde=True, bins=10)
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
-    plt.title('访问网站总次数分布',size=16)
+    plt.title('Distribution of Total Website Visits',size=16)
     plt.savefig(filename, bbox_inches='tight')
 get_WebsiteVisits_analyze1()
 
@@ -502,6 +502,7 @@ get_TimeOnSite_analyze2()
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.utils import resample
 from scipy.interpolate import interp1d
 from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, auc
@@ -532,7 +533,7 @@ get_model_analyze()
 # 预测列
 x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
-x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7)
+x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7, stratify=y)
 
 # 4.1 KNN近邻算法模型
 # 找到最高精度的k值
@@ -566,15 +567,16 @@ model = KNeighborsClassifier(n_neighbors=best_k)
 model.fit(x_train, y_train)
 train_accuracy = accuracy_score(y_train, model.predict(x_train.values))
 test_accuracy = accuracy_score(y_test, model.predict(x_test.values))
+print(f"KNN Train Accuracy: {train_accuracy}")
+print(f"KNN Test Accuracy: {test_accuracy}")
 
 # 评估
 y_pred = model.predict(x_test.values)
 accuracy = accuracy_score(y_test, y_pred)
 conf_matrix = confusion_matrix(y_test, y_pred)
-print(f'Model Accuracy: {accuracy}')
-print(f'Confusion Matrix: {conf_matrix}')
+print(f"KNN Confusion Matrix: \n{conf_matrix}")
 
-def get_model_cm1():
+def get_model_knn():
     cm = confusion_matrix(y_test, y_pred)
     plt.figure(figsize=(6, 6), dpi=80)
     sns.heatmap(cm, annot=True, cmap='rainbow', fmt='d', square=True,annot_kws={"size":12},cbar_kws={'shrink': 0.8})    
@@ -582,12 +584,12 @@ def get_model_cm1():
     plt.ylabel('Actual Values')  
     plt.title("Confusion Matrix", size=16)
     plt.tight_layout()
-    filename = 'fig/14-model_cm1.png'
+    filename = 'fig/14-model_cm_knn.png'
     plt.savefig(filename, bbox_inches='tight')
-get_model_cm1()
+get_model_knn()
 
 
-def get_model_roc1():
+def get_model_roc_knn():
     y_probs = model.predict_proba(x_test.values)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_probs)
     auc = roc_auc_score(y_test, y_probs)
@@ -604,16 +606,66 @@ def get_model_roc1():
     plt.title(f'ROC Curve - {type(model).__name__}', size=16)
     plt.legend(loc="lower right",fontsize=size)
     plt.tight_layout()
-    filename = 'fig/15-model_roc1.png'
+    filename = 'fig/15-model_roc_knn.png'
     plt.savefig(filename, bbox_inches='tight')
-get_model_roc1()
+    print(f"KNN AUC: {auc}")
+get_model_roc_knn()
+
 
 # AUC = 1，是完美分类器，采用这个预测模型时，存在至少一个阈值能得出完美预测。绝大多数预测的场合，不存在完美分类器。
 # 0.5 < AUC < 1，优于随机猜测。这个分类器（模型）妥善设定阈值的话，能有预测价值。
 # AUC = 0.5，跟随机猜测一样（例：抛硬币），模型没有预测价值。
 # AUC < 0.5，比随机猜测还差。
 
-# 4.2 随机森林
+
+# 4.2 逻辑回归
+# Train Logistic Regression model
+log_reg_model = LogisticRegression(max_iter=1000, random_state=42)
+log_reg_model.fit(x_train, y_train)
+
+# Predictions
+y_pred_lr = log_reg_model.predict(x_test)
+y_prob_lr = log_reg_model.predict_proba(x_test)[:, 1]
+
+# Evaluate Logistic Regression
+accuracy_lr = accuracy_score(y_test, y_pred_lr)
+conf_matrix_lr = confusion_matrix(y_test, y_pred_lr)
+print(f"Logistic Regression Train Accuracy: {accuracy_score(y_train, log_reg_model.predict(x_train))}")
+print(f"Logistic Regression Test Accuracy: {accuracy_lr}")
+print(f"Logistic Regression Confusion Matrix: \n{conf_matrix_lr}")
+
+# Confusion Matrix Heatmap
+def get_model_cm_lr():
+    cm = confusion_matrix(y_test, y_pred_lr)
+    plt.figure(figsize=(6, 6), dpi=80)
+    sns.heatmap(cm, annot=True, cmap='rainbow', fmt='d', square=True, annot_kws={"size":12}, cbar_kws={'shrink': 0.8})
+    plt.xlabel('Predicted Values')
+    plt.ylabel('True Values')
+    plt.title("Confusion Matrix - Logistic Regression", size=16)
+    plt.tight_layout()
+    filename = 'fig/16-model_cm_lr.png'
+    plt.savefig(filename, bbox_inches='tight')
+get_model_cm_lr()
+
+# ROC Curve
+def get_model_roc_lr():
+    fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
+    auc_lr = roc_auc_score(y_test, y_prob_lr)
+
+    plt.figure(figsize=(12, 6), dpi=80)
+    plt.plot(fpr_lr, tpr_lr, color='blue', lw=2, label=f'AUC = {auc_lr:.2f}')
+    plt.plot([0, 1], [0, 1], color='gray', linestyle='--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f'ROC Curve - Logistic Regression')
+    plt.legend(loc="lower right")
+    plt.tight_layout()
+    filename = 'fig/17-model_roc_lr.png'
+    plt.savefig(filename, bbox_inches='tight')
+    print(f"Logistic Regression AUC: {auc_lr}")
+get_model_roc_lr()
+
+# 4.3 随机森林
 x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
 x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7)
@@ -623,12 +675,14 @@ model.fit(x_train, y_train)
 
 # 评估
 y_pred = model.predict(x_test)
-accuracy = accuracy_score(y_test, y_pred)
+train_accuracy = accuracy_score(y_train, model.predict(x_train))
+test_accuracy = accuracy_score(y_test, y_pred)
 conf_matrix = confusion_matrix(y_test, y_pred)
-print(f'Model Accuracy: {accuracy}')
-print(f'Confusion Matrix: {conf_matrix}')
+print(f"Random Forest Train Accuracy: {train_accuracy}")
+print(f"Random Forest Test Accuracy: {test_accuracy}")
+print(f"Random Forest Confusion Matrix: \n{conf_matrix}")
 
-def get_model_cm2():
+def get_model_cm_rf():
     cm = confusion_matrix(y_test, y_pred)
     plt.figure(figsize=(6, 6), dpi=80)
     sns.heatmap(cm, annot=True, cmap='rainbow', fmt='d', square=True,annot_kws={"size":12},cbar_kws={'shrink': 0.8})    
@@ -636,12 +690,12 @@ def get_model_cm2():
     plt.ylabel('True Values')  
     plt.title("Confusion Matrix", size=16)
     plt.tight_layout()
-    filename = 'fig/16-model_roc2.png'
+    filename = 'fig/18-model_cm_rf.png'
     plt.savefig(filename, bbox_inches='tight')
-get_model_cm2()
+get_model_cm_rf()
 
 # ROC曲线
-def get_model_roc2():
+def get_model_roc_rf():
     y_probs = model.predict_proba(x_test.values)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_probs)
     auc = roc_auc_score(y_test, y_probs)
@@ -658,18 +712,23 @@ def get_model_roc2():
     plt.title(f'ROC Curve - {type(model).__name__}', size=16)
     plt.legend(loc="lower right",fontsize=size)
     plt.tight_layout()
-    filename = 'fig/17-model_roc2.png'
+    filename = 'fig/19-model_roc_rf.png'
     plt.savefig(filename, bbox_inches='tight')
-get_model_roc2()
+    print(f"RF AUC: {auc}")
+get_model_roc_rf()
 
 # 模型性能稳定性
-def get_model_roc3():
+def get_model_roc_rf_stability():
     # 预测
     y_probs = model.predict_proba(x_test)[:, 1]
     auc = roc_auc_score(y_test, y_probs)
 
     # 计算原始ROC曲线的FPR, TPR, 和thresholds  
     fpr_orig, tpr_orig, thresholds_orig = roc_curve(y_test, y_probs)  
+    print(f"RF Original FPR (first 5): {fpr_orig[:5]}")
+    print(f"RF Original TPR (first 5): {tpr_orig[:5]}")
+    print(f"RF Thresholds (first 5): {thresholds_orig[:5]}")
+
     n_bootstraps = 100 
     fpr_bootstraps = np.zeros((n_bootstraps, len(fpr_orig)))  
     tpr_bootstraps = np.zeros((n_bootstraps, len(tpr_orig)))  
@@ -690,6 +749,7 @@ def get_model_roc3():
     # fpr_ci = np.percentile(fpr_bootstraps, [2.5, 97.5], axis=0)
     # tpr_mean = np.mean(tpr_bootstraps, axis=0)
     tpr_ci = np.percentile(tpr_bootstraps, [2.5, 97.5], axis=0)  
+    print(f"95% Confidence Interval (TPR): Lower = {tpr_ci[0][:5]}, Upper = {tpr_ci[1][:5]}")
 
     # 绘制ROC曲线和置信区间  
     plt.figure(figsize=(12, 6), dpi=80)  
@@ -704,9 +764,10 @@ def get_model_roc3():
     plt.legend(loc="lower right",fontsize=size)  
     plt.grid(False)  
     plt.tight_layout()
-    filename = 'fig/18-model_roc3.png'
+    filename = 'fig/20-model_roc_rf_stability.png'
     plt.savefig(filename, bbox_inches='tight')
-get_model_roc3()
+get_model_roc_rf_stability()
+
 
 # 特征重要性
 def get_feature_importances():
@@ -734,6 +795,7 @@ def get_feature_importances():
     plt.title('Random Forest Feature Importance', size=16)
     plt.grid(True, which='both', linestyle='--', linewidth=0.5)  
     plt.tight_layout()
-    filename = 'fig/19-feature_importances.png'
+    filename = 'fig/21-feature_importances.png'
     plt.savefig(filename, bbox_inches='tight')
 get_feature_importances()
+
