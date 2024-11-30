@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+import joblib
 warnings.filterwarnings('ignore')
 
 # plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -515,9 +516,23 @@ data = df.drop(columns=['AdvertisingPlatform', 'AdvertisingTool', 'CustomerID'])
 
 # 特征编码
 encoder = LabelEncoder()
+# Encoding Gender
 data['Gender'] = encoder.fit_transform(data_label['Gender'])
+print("Gender Encoding:")
+for i, label in enumerate(encoder.classes_):
+    print(f"{label}: {i}")
+
+# Encoding CampaignChannel
 data['CampaignChannel'] = encoder.fit_transform(data_label['CampaignChannel'])
+print("\nCampaignChannel Encoding:")
+for i, label in enumerate(encoder.classes_):
+    print(f"{label}: {i}")
+
+# Encoding CampaignType
 data['CampaignType'] = encoder.fit_transform(data_label['CampaignType'])
+print("\nCampaignType Encoding:")
+for i, label in enumerate(encoder.classes_):
+    print(f"{label}: {i}")
 
 def get_model_analyze(): 
     # 绘制热力图
@@ -537,41 +552,41 @@ x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, ra
 
 # 4.1 KNN近邻算法模型
 # 找到最高精度的k值
-k_values = range(1, 21)
-accuracies = []
-for k in k_values:
-    model = KNeighborsClassifier(n_neighbors=k)
-    model.fit(x_train, y_train)
-    y_pred = model.predict(x_test.values)
+knn_k_values = range(1, 21)
+knn_accuracies = []
+for k in knn_k_values:
+    knn_model = KNeighborsClassifier(n_neighbors=k)
+    knn_model.fit(x_train, y_train)
+    y_pred = knn_model.predict(x_test.values)
     accuracy = accuracy_score(y_test, y_pred)
-    accuracies.append(accuracy)
-best_k = k_values[np.argmax(accuracies)]
-best_accuracy = max(accuracies)
+    knn_accuracies.append(accuracy)
+best_k = knn_k_values[np.argmax(knn_accuracies)]
+best_accuracy = max(knn_accuracies)
 print(f"Best value of K: {best_k}")
 print(f"Corresponding accuracy: {best_accuracy}")
 
 def get_best_k():
     plt.figure(figsize=(10, 6))
-    plt.plot(k_values, accuracies, marker='o', linestyle='-')
+    plt.plot(knn_k_values, knn_accuracies, marker='o', linestyle='-')
     plt.title('KNN accuracy for different values of K')
     plt.xlabel('Value of K')
     plt.ylabel('Accuracy')
-    plt.xticks(k_values)
+    plt.xticks(knn_k_values)
     plt.grid(False)
     filename = 'fig/13-best_k.png'
     plt.savefig(filename, bbox_inches='tight')
 get_best_k()
 
 k = 15
-model = KNeighborsClassifier(n_neighbors=best_k)
-model.fit(x_train, y_train)
-train_accuracy = accuracy_score(y_train, model.predict(x_train.values))
-test_accuracy = accuracy_score(y_test, model.predict(x_test.values))
+knn_model_best_k = KNeighborsClassifier(n_neighbors=best_k)
+knn_model_best_k.fit(x_train, y_train)
+train_accuracy = accuracy_score(y_train, knn_model_best_k.predict(x_train.values))
+test_accuracy = accuracy_score(y_test, knn_model_best_k.predict(x_test.values))
 print(f"KNN Train Accuracy: {train_accuracy}")
 print(f"KNN Test Accuracy: {test_accuracy}")
 
 # 评估
-y_pred = model.predict(x_test.values)
+y_pred = knn_model_best_k.predict(x_test.values)
 accuracy = accuracy_score(y_test, y_pred)
 conf_matrix = confusion_matrix(y_test, y_pred)
 print(f"KNN Confusion Matrix: \n{conf_matrix}")
@@ -590,7 +605,7 @@ get_model_knn()
 
 
 def get_model_roc_knn():
-    y_probs = model.predict_proba(x_test.values)[:, 1]
+    y_probs = knn_model_best_k.predict_proba(x_test.values)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_probs)
     auc = roc_auc_score(y_test, y_probs)
     
@@ -603,7 +618,7 @@ def get_model_roc_knn():
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate', color=color1, fontsize=size)
     plt.ylabel('Recall Rate', color=color1, fontsize=size)
-    plt.title(f'ROC Curve - {type(model).__name__}', size=16)
+    plt.title(f'ROC Curve - {type(knn_model_best_k).__name__}', size=16)
     plt.legend(loc="lower right",fontsize=size)
     plt.tight_layout()
     filename = 'fig/15-model_roc_knn.png'
@@ -620,6 +635,10 @@ get_model_roc_knn()
 
 # 4.2 逻辑回归
 # Train Logistic Regression model
+x_data = data.drop(columns=['Conversion'])
+y = data['Conversion']
+x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7, stratify=y)
+
 log_reg_model = LogisticRegression(max_iter=1000, random_state=42)
 log_reg_model.fit(x_train, y_train)
 
@@ -670,12 +689,12 @@ x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
 x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7)
 
-model = RandomForestClassifier(random_state=15)
-model.fit(x_train, y_train)
+random_forest_model = RandomForestClassifier(random_state=15)
+random_forest_model.fit(x_train, y_train)
 
 # 评估
-y_pred = model.predict(x_test)
-train_accuracy = accuracy_score(y_train, model.predict(x_train))
+y_pred = random_forest_model.predict(x_test)
+train_accuracy = accuracy_score(y_train, random_forest_model.predict(x_train))
 test_accuracy = accuracy_score(y_test, y_pred)
 conf_matrix = confusion_matrix(y_test, y_pred)
 print(f"Random Forest Train Accuracy: {train_accuracy}")
@@ -696,7 +715,7 @@ get_model_cm_rf()
 
 # ROC曲线
 def get_model_roc_rf():
-    y_probs = model.predict_proba(x_test.values)[:, 1]
+    y_probs = random_forest_model.predict_proba(x_test.values)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_probs)
     auc = roc_auc_score(y_test, y_probs)
 
@@ -709,7 +728,7 @@ def get_model_roc_rf():
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate', color=color1, fontsize=size)
     plt.ylabel('Recall Rate', color=color1, fontsize=size)
-    plt.title(f'ROC Curve - {type(model).__name__}', size=16)
+    plt.title(f'ROC Curve - {type(random_forest_model).__name__}', size=16)
     plt.legend(loc="lower right",fontsize=size)
     plt.tight_layout()
     filename = 'fig/19-model_roc_rf.png'
@@ -720,7 +739,7 @@ get_model_roc_rf()
 # 模型性能稳定性
 def get_model_roc_rf_stability():
     # 预测
-    y_probs = model.predict_proba(x_test)[:, 1]
+    y_probs = random_forest_model.predict_proba(x_test)[:, 1]
     auc = roc_auc_score(y_test, y_probs)
 
     # 计算原始ROC曲线的FPR, TPR, 和thresholds  
@@ -736,7 +755,7 @@ def get_model_roc_rf_stability():
     # 计算多个ROC曲线  
     for i in range(n_bootstraps):  
         x_resample, y_resample = resample(x_test, y_test)  
-        y_probs_resample = model.predict_proba(x_resample)[:, 1]  
+        y_probs_resample = random_forest_model.predict_proba(x_resample)[:, 1]  
         fpr_resample, tpr_resample, _ = roc_curve(y_resample, y_probs_resample)  
         # 线性插值
         fpr_interp = interp1d(np.linspace(0, 1, len(fpr_resample)), fpr_resample, fill_value="extrapolate")(np.linspace(0, 1, len(fpr_orig)))  
@@ -772,7 +791,7 @@ get_model_roc_rf_stability()
 # 特征重要性
 def get_feature_importances():
     # 示例数据  
-    feature_importances = model.feature_importances_
+    feature_importances = random_forest_model.feature_importances_
     features_rf = pd.DataFrame({'Feature': x_train.columns, 'Importance': feature_importances})
     features_rf.sort_values(by='Importance', inplace=True)
 
@@ -799,3 +818,12 @@ def get_feature_importances():
     plt.savefig(filename, bbox_inches='tight')
 get_feature_importances()
 
+# 保存模型
+model_filename = "random_forest_model.pkl"
+joblib.dump(random_forest_model, model_filename)
+print(f"Model saved to {model_filename}")
+
+# 测试加载模型
+loaded_model = joblib.load(model_filename)
+test_accuracy = accuracy_score(y_test, loaded_model.predict(x_test))
+print(f"Test Accuracy of loaded model: {test_accuracy}")
