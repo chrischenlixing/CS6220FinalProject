@@ -689,7 +689,8 @@ x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
 x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7)
 
-random_forest_model = RandomForestClassifier(random_state=15)
+random_forest_model = RandomForestClassifier(class_weight='balanced',random_state=15)
+# random_forest_model = RandomForestClassifier(random_state=15)
 random_forest_model.fit(x_train, y_train)
 
 # 评估
