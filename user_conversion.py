@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 import joblib
+
 warnings.filterwarnings('ignore')
 
 # plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -45,8 +46,6 @@ print(df.head())
 # 2.4 删除重复值
 df = df.drop_duplicates()
 
-# 2.5 删除空值
-df = df.drop_duplicates()
 
 # 3 数据分析-特征分析
 df1 = df.copy()
@@ -510,29 +509,10 @@ from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, auc
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-# 特征处理
-data_label = df[['Gender', 'CampaignChannel', 'CampaignType']]
-data = df.drop(columns=['AdvertisingPlatform', 'AdvertisingTool', 'CustomerID'])
+# 数据预处理
+# Drop columns first
+data = df.drop(columns=['AdvertisingPlatform', 'AdvertisingTool', 'CustomerID','Gender', 'CampaignChannel', 'CampaignType','Age'])
 
-# 特征编码
-encoder = LabelEncoder()
-# Encoding Gender
-data['Gender'] = encoder.fit_transform(data_label['Gender'])
-print("Gender Encoding:")
-for i, label in enumerate(encoder.classes_):
-    print(f"{label}: {i}")
-
-# Encoding CampaignChannel
-data['CampaignChannel'] = encoder.fit_transform(data_label['CampaignChannel'])
-print("\nCampaignChannel Encoding:")
-for i, label in enumerate(encoder.classes_):
-    print(f"{label}: {i}")
-
-# Encoding CampaignType
-data['CampaignType'] = encoder.fit_transform(data_label['CampaignType'])
-print("\nCampaignType Encoding:")
-for i, label in enumerate(encoder.classes_):
-    print(f"{label}: {i}")
 
 def get_model_analyze(): 
     # 绘制热力图
@@ -687,13 +667,13 @@ get_model_roc_lr()
 # 4.3 随机森林
 x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
-x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7)
+x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7, stratify=y)
 
-random_forest_model = RandomForestClassifier(class_weight='balanced',random_state=15)
-# random_forest_model = RandomForestClassifier(random_state=15)
+random_forest_model = RandomForestClassifier(random_state=15)
 random_forest_model.fit(x_train, y_train)
 
 # 评估
+
 y_pred = random_forest_model.predict(x_test)
 train_accuracy = accuracy_score(y_train, random_forest_model.predict(x_train))
 test_accuracy = accuracy_score(y_test, y_pred)
