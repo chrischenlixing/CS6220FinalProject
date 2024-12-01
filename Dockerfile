@@ -13,8 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 运行 user_conversion.py 以生成模型文件
 RUN python user_conversion.py
 
-# 暴露 Flask 运行的端口
-EXPOSE 5000
+EXPOSE 8080
 
 # 启动 Flask 应用
 CMD ["python", "app.py"]
