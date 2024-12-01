@@ -808,3 +808,5 @@ print(f"Model saved to {model_filename}")
 loaded_model = joblib.load(model_filename)
 test_accuracy = accuracy_score(y_test, loaded_model.predict(x_test))
 print(f"Test Accuracy of loaded model: {test_accuracy}")
+
+print("test cloud build ci/cd")
