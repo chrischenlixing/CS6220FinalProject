@@ -1,6 +1,6 @@
 # User Conversion API
 
-This project provides a containerized Flask-based API for predicting user conversion using a pre-trained Random Forest model. The API processes JSON input and returns a prediction along with the confidence level.
+This project provides a containerized Flask-based API for predicting TMall's user conversion using a pre-trained Random Forest model. The API processes JSON input and returns a prediction along with the confidence level.
 
 ---
 
@@ -13,6 +13,7 @@ This project provides a containerized Flask-based API for predicting user conver
 {
   "Content-Type": "application/json"
 }
+```
 **Sample Input**:  
 ```json
 {
@@ -31,6 +32,7 @@ This project provides a containerized Flask-based API for predicting user conver
     "PreviousPurchases": 1,
     "LoyaltyPoints": 4474
 }
+```
 
 ---
 
