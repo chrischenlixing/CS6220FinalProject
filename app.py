@@ -3,54 +3,62 @@ import joblib
 import pandas as pd
 import os
 
-# 创建 Flask 应用
+# Create a Flask application
 app = Flask(__name__)
 
-# 加载模型
+# Load the pre-trained model
 model_filename = "random_forest_model.pkl"
-model = joblib.load(model_filename)
-print(f"Model loaded from {model_filename}")
+try:
+    model = joblib.load(model_filename)
+    print(f"Model loaded successfully from {model_filename}")
+except FileNotFoundError:
+    raise Exception(f"Model file '{model_filename}' not found. Ensure it is in the application directory.")
 
-# 定义预测接口
+# Define the prediction endpoint
 @app.route('/predict', methods=['POST'])
-def predict():
-    # 获取 JSON 数据
+def predict_user_conversion():
+    """
+    Handle POST requests for user conversion predictions.
+    Expects JSON input containing the features required by the model.
+    """
+    # Get the JSON data from the request
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No input data provided'}), 400
 
     try:
-
-        # 将输入数据转换为 DataFrame
+        # Convert input data to a DataFrame
         input_data = pd.DataFrame([data])
-        
-        # 检查是否包含所有必要的特征
+
+        # Check for missing features required by the model
         required_features = model.feature_names_in_
         print(f"Required features: {required_features}")
         missing_features = [feature for feature in required_features if feature not in input_data.columns]
         if missing_features:
             return jsonify({'error': f'Missing features: {missing_features}'}), 400
 
-        # 确保输入数据顺序与模型训练时一致
+        # Reorder columns to match the model's feature order
         input_data = input_data[required_features]
 
-        # 模型预测
-        prediction = model.predict(input_data)
+        # Make predictions using the model
+        prediction = model.predict(input_data)[0]
+        # Calculate confidence based on majority voting from decision trees
         votes = [tree.predict(input_data)[0] for tree in model.estimators_]
-        confidence = votes.count(prediction[0]) / len(votes)
+        confidence = votes.count(prediction) / len(votes)
 
-        # 返回结果
+        # Return the prediction and confidence
         response = {
-            'prediction': int(prediction[0]),
-            'confidence': float(confidence)
+            'prediction': int(prediction),
+            'confidence': round(float(confidence), 2)
         }
         return jsonify(response)
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        # Handle exceptions and return an error response
+        return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
-# 启动 Flask 应用
+# Start the Flask application
 if __name__ == "__main__":
-    # 从环境变量获取 PORT，默认为 8080
+    # Get the port from environment variables (default to 8080)
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=True)
