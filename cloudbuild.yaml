@@ -20,11 +20,12 @@ steps:
       - '--image'
       - 'gcr.io/cs6220userconversion/user-conversion-api'
       - '--region'
-      - 'us-east1'
+      - '$_REGION'  # Dynamic region substitution
       - '--platform'
       - 'managed'
-      - '--allow-unauthenticated'
+      - '--allow-unauthenticated'  # Allows public access; adjust as needed
 
 substitutions:
-  _REGION: 'us-east1'
-timeout: '1200s'
+  _REGION: 'us-east1'  # Default region for deployment
+timeout: '1200s'  # Set timeout to 20 minutes
+
