@@ -1,19 +1,20 @@
-# 使用官方 Python 基础镜像
+# Use the official Python base image
 FROM python:3.9-slim
 
-# 设置工作目录
+# Set the working directory
 WORKDIR /app
 
-# 复制项目文件到容器
+# Copy project files to the container
 COPY . .
 
-# 安装 Python 依赖
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 运行 user_conversion.py 以生成模型文件
+# Run user_conversion.py to generate model files
 RUN python user_conversion.py
 
+# Expose port 8080
 EXPOSE 8080
 
-# 启动 Flask 应用
+# Start the Flask application
 CMD ["python", "app.py"]
