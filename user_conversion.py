@@ -327,7 +327,7 @@ def click_through_rate():
 click_through_rate()
 
 def click_through_rate_conversion():
-    filename = 'fig/7-click_through_rate_conversion.png'
+    filename = 'fig/8-click_through_rate_conversion.png'
     labels=['0-0.05','0.05-0.1','0.1-0.15','0.15-0.2','0.2-0.25','0.25-0.3']
     df1['ClickThroughRate_bin'] = pd.cut(df1['ClickThroughRate'],bins=[0,0.05,0.1,0.15,0.2,0.25,0.3],labels=labels)
     grouped = df1.groupby(['ClickThroughRate_bin', 'Conversion']).size().reset_index(name='counts')
@@ -377,7 +377,7 @@ click_through_rate_conversion()
 
 # Distribution of total website visits
 def website_visits():
-    filename = 'fig/8-website_visits.png'
+    filename = 'fig/9-website_visits.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis1.set_xlabel('Total Number of Website Visits', color=color1, fontsize=size)
@@ -390,7 +390,7 @@ def website_visits():
 website_visits()
 
 def website_visits_conversion():
-    filename = 'fig/9-website_visits_conversion.png'
+    filename = 'fig/10-website_visits_conversion.png'
     labels=['0-10','10-20','20-30','30-40','40-50']
     df1['WebsiteVisits_bin'] = pd.cut(df1['WebsiteVisits'],bins=[0,10,20,30,40,50],labels=labels)
     grouped = df1.groupby(['WebsiteVisits_bin', 'Conversion']).size().reset_index(name='counts')
@@ -439,7 +439,7 @@ website_visits_conversion()
 
 # Average time on site each visit.
 def time_on_site():
-    filename = 'fig/10-time_on_site.png'
+    filename = 'fig/11-time_on_site.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis1.set_xlabel('Average Time per Visit', color=color1, fontsize=size)
@@ -452,7 +452,7 @@ def time_on_site():
 time_on_site()
 
 def time_on_site_conversion():
-    filename = 'fig/11-time_on_site_conversion.png'
+    filename = 'fig/12-time_on_site_conversion.png'
     labels=['0-3','3-6','6-9','9-12','12-15']
     df1['TimeOnSite_bin'] = pd.cut(df1['TimeOnSite'],bins=[0,3,6,9,12,15],labels=labels)
     grouped = df1.groupby(['TimeOnSite_bin', 'Conversion']).size().reset_index(name='counts')
@@ -510,7 +510,7 @@ def model_heatmap():
     sns.heatmap(corrdf, annot=True,cmap="rainbow", linewidths=0.05,square=True,annot_kws={"size":8}, cbar_kws={'shrink': 0.8})
     plt.title("Heatmap of Feature Correlations",size=16)
     plt.tight_layout()
-    filename = 'fig/12-model_heatmap.png'
+    filename = 'fig/13-model_heatmap.png'
     plt.savefig(filename, bbox_inches='tight')
 model_heatmap()
 
@@ -544,7 +544,7 @@ def get_best_k():
     plt.ylabel('Accuracy')
     plt.xticks(knn_k_values)
     plt.grid(False)
-    filename = 'fig/13-best_k.png'
+    filename = 'fig/14-best_k.png'
     plt.savefig(filename, bbox_inches='tight')
 get_best_k()
 
@@ -569,7 +569,7 @@ def get_model_knn():
     plt.ylabel('Actual Values')  
     plt.title("Confusion Matrix", size=16)
     plt.tight_layout()
-    filename = 'fig/14-model_cm_knn.png'
+    filename = 'fig/15-model_cm_knn.png'
     plt.savefig(filename, bbox_inches='tight')
 get_model_knn()
 
@@ -591,7 +591,7 @@ def get_model_roc_knn():
     plt.title(f'ROC Curve - {type(knn_model_best_k).__name__}', size=16)
     plt.legend(loc="lower right",fontsize=size)
     plt.tight_layout()
-    filename = 'fig/15-model_roc_knn.png'
+    filename = 'fig/16-model_roc_knn.png'
     plt.savefig(filename, bbox_inches='tight')
     print(f"KNN AUC: {auc}")
 get_model_roc_knn()
@@ -633,7 +633,7 @@ def get_model_cm_lr():
     plt.ylabel('True Values')
     plt.title("Confusion Matrix - Logistic Regression", size=16)
     plt.tight_layout()
-    filename = 'fig/16-model_cm_lr.png'
+    filename = 'fig/17-model_cm_lr.png'
     plt.savefig(filename, bbox_inches='tight')
 get_model_cm_lr()
 
@@ -650,7 +650,7 @@ def get_model_roc_lr():
     plt.title(f'ROC Curve - Logistic Regression')
     plt.legend(loc="lower right")
     plt.tight_layout()
-    filename = 'fig/17-model_roc_lr.png'
+    filename = 'fig/18-model_roc_lr.png'
     plt.savefig(filename, bbox_inches='tight')
     print(f"Logistic Regression AUC: {auc_lr}")
 get_model_roc_lr()
@@ -680,7 +680,7 @@ def get_model_cm_rf():
     plt.ylabel('True Values')  
     plt.title("Confusion Matrix", size=16)
     plt.tight_layout()
-    filename = 'fig/18-model_cm_rf.png'
+    filename = 'fig/19-model_cm_rf.png'
     plt.savefig(filename, bbox_inches='tight')
 get_model_cm_rf()
 
@@ -702,7 +702,7 @@ def get_model_roc_rf():
     plt.title(f'ROC Curve - {type(random_forest_model).__name__}', size=16)
     plt.legend(loc="lower right",fontsize=size)
     plt.tight_layout()
-    filename = 'fig/19-model_roc_rf.png'
+    filename = 'fig/20-model_roc_rf.png'
     plt.savefig(filename, bbox_inches='tight')
     print(f"RF AUC: {auc}")
 get_model_roc_rf()
@@ -751,7 +751,7 @@ def get_model_roc_rf_stability():
     plt.legend(loc="lower right",fontsize=size)  
     plt.grid(False)  
     plt.tight_layout()
-    filename = 'fig/20-model_roc_rf_stability.png'
+    filename = 'fig/21-model_roc_rf_stability.png'
     plt.savefig(filename, bbox_inches='tight')
 get_model_roc_rf_stability()
 
@@ -779,7 +779,7 @@ def get_feature_importances():
     plt.title('Random Forest Feature Importance', size=16)
     plt.grid(True, which='both', linestyle='--', linewidth=0.5)  
     plt.tight_layout()
-    filename = 'fig/21-feature_importances.png'
+    filename = 'fig/22-feature_importances.png'
     plt.savefig(filename, bbox_inches='tight')
 get_feature_importances()
 
