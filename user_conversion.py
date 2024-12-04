@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# 1 导入模块
+# 1 Import necessary modules
 import seaborn as sns
 import pandas as pd
 import numpy as np
@@ -9,55 +9,67 @@ import matplotlib.pyplot as plt
 import warnings
 import joblib
 
+from sklearn.preprocessing import LabelEncoder
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.utils import resample
+from scipy.interpolate import interp1d
+from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, auc
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Ignore warnings for cleaner output
 warnings.filterwarnings('ignore')
 
-# plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-# 2 数据处理
-# 2.1 读取数据
+# 2 Data Processing
+# 2.1 Read data
 df = pd.read_csv('./data/user_conversion_prediction_dataset.csv')
 print(df.head())
 
-# 2.3 字段说明
-# | 字段	         | 说明    |
-# |:----------       |:-------- |
-# | CustomerID       | 每个客户的唯一标识符 |
-# | Age            | 客户的年龄 |
-# | Gender          | 客户的性别（男性/女性） |
-# | Income          | 客户的年收入，以美元计 |
-# | CampaignChannel    | 营销活动传递的渠道：电子邮件(Email)、社交媒体(Social Media)、搜索引擎优化(SEO)、付费点击(PPC)、推荐(Referral)） |
-# | CampaignType      | 营销活动的类型：意识(Awareness)、考虑(Consideration)、转化(Conversion)、留存(Retention) |
-# | AdSpend         | 在营销活动上的花费，以美元计 |
-# | ClickThroughRate   | 客户点击营销内容的比率 |
-# | ConversionRate     | 点击转化为期望行为（如购买）的比率 |
-# | WebsiteVisits     | 访问网站的总次数 |
-# | PagesPerVisit     | 每次会话平均访问的页面数 |
-# | TimeOnSite       | 每次访问平均在网站上花费的时间（分钟） |
-# | SocialShares      | 营销内容在社交媒体上被分享的次数 |
-# | EmailOpens       | 营销电子邮件被打开的次数 |
-# | EmailClicks       | 营销电子邮件中链接被点击的次数 |
-# | PreviousPurchases   | 客户之前进行的购买次数 |
-# | LoyaltyPoints     | 客户累积的忠诚度积分数 |
-# | AdvertisingPlatform | 广告平台（保密） |
-# | AdvertisingTool    | 广告工具：保密 |
-# | Conversion       | 目标变量：二元变量，表示客户是否转化（1）或未转化（0） |
 
-# 2.4 删除重复值
+# 2.2 Field Description
+# | Field                | Description                                         |
+# |:---------------------|:--------------------------------------------------- |
+# | CustomerID           | Unique identifier for each customer                 |
+# | Age                  | Age of the customer                                 |
+# | Gender               | Gender of the customer (Male/Female)                |
+# | Income               | Annual income of the customer in USD                |
+# | CampaignChannel      | Channel of marketing (Email, Social Media, SEO, PPC, Referral) |
+# | CampaignType         | Type of marketing campaign (Awareness, Consideration, Conversion, Retention) |
+# | AdSpend              | Marketing spending in USD                           |
+# | ClickThroughRate     | Click rate on marketing content                     |
+# | ConversionRate       | Rate of clicks converted into desired actions       |
+# | WebsiteVisits        | Total number of website visits                      |
+# | PagesPerVisit        | Average number of pages visited per session         |
+# | TimeOnSite           | Average time spent per visit in minutes             |
+# | SocialShares         | Number of shares on social media                    |
+# | EmailOpens           | Number of times marketing emails were opened        |
+# | EmailClicks          | Number of clicks on links in marketing emails       |
+# | PreviousPurchases    | Number of previous purchases                        |
+# | LoyaltyPoints        | Accumulated loyalty points of the customer          |
+# | AdvertisingPlatform  | Advertising platform (Confidential)                 |
+# | AdvertisingTool      | Advertising tool (Confidential)                     |
+# | Conversion           | Target variable: Binary variable indicating whether the customer converted (1) or not (0) |
+
+
+# 2.3 Remove duplicate entries
 df = df.drop_duplicates()
 
 
-# 3 数据分析-特征分析
+# 3 Feature Analysis
 df1 = df.copy()
 range_color = ['#045275', '#089099', '#7CCBA2', '#FCDE9C', '#F0746E', '#DC3977']
 color1 = range_color[0]
 color2 = range_color[-1]
 size = 12
 
-# 年龄分布
-# 使用 KDE 曲线（核密度估计）直观地展示年龄数据的分布趋势。帮助了解用户的年龄分布特点，例如用户是否集中在某些年龄段。
-def get_Age_analyze1():
-    filename='fig/1-Age_analyze1.png'
+# Analyze age distribution using KDE curve
+# Visualizes the age distribution to understand user demographics.
+def age():
+    filename='fig/1-age.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis1.set_xlabel('Ages(Year)', color=color1, fontsize=size)
@@ -65,13 +77,14 @@ def get_Age_analyze1():
     axis1.tick_params('both', colors=color1, labelsize=size)
     sns.histplot(df['Age'], kde=True, bins=10)
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
-    plt.title('Ages Distribution',size=16)
+    plt.title('Age Distribution',size=16)
     plt.savefig(filename, bbox_inches='tight')
-get_Age_analyze1()
+age()
 
-#在每个年龄段中，分别统计完成转化（Conversion == 1）和未完成转化（Conversion == 0）的人数。计算转化率，即完成转化人数占总人数的百分比。
-def get_Age_analyze2():
-    filename = 'fig/2-Age_analyze2.png'
+# Analyze conversion rates for different age groups
+# Calculates conversion rates for each age range.
+def conversion_by_age():
+    filename = 'fig/2-conversion_by_age.png'
     labels=['10-20','20-30','30-40','40-50','50-60','60-70']
     df1['age_bin'] = pd.cut(df1['Age'],bins=[10,20,30,40,50,60,70],labels=labels)
     grouped = df1.groupby(['age_bin', 'Conversion']).size().reset_index(name='counts')
@@ -84,12 +97,10 @@ def get_Age_analyze2():
     y_data1 = merged['all'].values.tolist()
     y_data2 = merged['ratio'].values.tolist()
 
-    # 创建图像
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))# (left, bottom, width, height) 
     axis2 = axis1.twinx()
 
-    # 绘制bar
     axis1.bar(labels, y_data1, label='Number of People',color=color1, alpha=0.8)
     axis1.set_ylim(0, 2500)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
@@ -98,7 +109,6 @@ def get_Age_analyze2():
     for i, (xt, yt) in enumerate(zip(labels, y_data1)):  
         axis1.text(xt, yt + 50, f'{yt:.2f}',size=size,ha='center', va='bottom', color=color1)
 
-    # 绘制plot
     axis2.plot(labels, y_data2,label='Converstion Rate', color=range_color[-1], marker="o", linewidth=2)
     axis2.set_ylabel('Converstion Rate(%)', color=color2,fontsize=size)
     axis2.tick_params('y', colors=color2, labelsize=size)
@@ -117,13 +127,15 @@ def get_Age_analyze2():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     fig.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
-#客户年龄集中分布在10-70岁之间。
-#不同年龄段的客户转化率波动不大，所以年龄对客户是否转化没有太大影响。
-get_Age_analyze2()
 
-# 分析不同营销渠道的用户分布及其转化率
-def get_CampaignChannel_analyze():
-    filename = 'fig/3-CampaignChannel_analyze.png'
+# Users are concentrated in the 10-70 age range.
+# Conversion rates across different age groups show minor fluctuations,
+# indicating minimal influence of age on conversion rates.
+conversion_by_age()
+
+# Analyze user distribution and conversion rates across marketing channels
+def campaign_channel():
+    filename = 'fig/3-campaign_channel.png'
     CampaignChannel_dict = {
         'Email': 'Email',
         'PPC': 'Pay-Per-Click',
@@ -143,12 +155,10 @@ def get_CampaignChannel_analyze():
     y_data1 = merged['all'].values.tolist()
     y_data2 = merged['ratio'].values.tolist()
 
-    # 创建图像
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))# (left, bottom, width, height) 
     axis2 = axis1.twinx()
 
-    # 绘制bar
     axis1.bar(x_data, y_data1, label='Number of People',color=range_color[2], alpha=0.8)
     axis1.set_ylim(0, 2500)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
@@ -157,7 +167,6 @@ def get_CampaignChannel_analyze():
     for i, (xt, yt) in enumerate(zip(x_data, y_data1)):  
         axis1.text(xt, yt + 50, f'{yt:.2f}',size=size,ha='center', va='bottom', color=range_color[2])
 
-    # 绘制plot
     axis2.plot(x_data, y_data2,label='Conversion Rate', color=color2, marker="o", linewidth=2)
     axis2.set_ylabel('Conversion Rate (%)', color=color2,fontsize=size)
     axis2.tick_params('y', colors=color2, labelsize=size)
@@ -176,12 +185,13 @@ def get_CampaignChannel_analyze():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     fig.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
-# 五个不同营销渠道的用户转化率波动在2%以内，所以营销渠道对客户是否转化没有太大影响。
-get_CampaignChannel_analyze()
+# Conversion rates across five marketing channels fluctuate within 2%.
+# Marketing channels have minimal impact on whether customers convert.
+campaign_channel()
 
-# 营销类型分布 感觉没什么用
-def get_CampaignType_analyze():
-    filename = 'fig/4-CampaignType_analyze.png'
+# Distribution of marketing types
+def campaign_type():
+    filename = 'fig/4-campaign_type.png'
     CampaignType_dic = {
         'Awareness': 'Awareness',
         'Consideration': 'Consideration',
@@ -201,12 +211,10 @@ def get_CampaignType_analyze():
     y_data1 = merged['all'].values.tolist()
     y_data2 = merged['ratio'].values.tolist()
 
-    # 创建图像
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis2 = axis1.twinx()
 
-    # 绘制bar
     axis1.bar(x_data, y_data1, label='Number of People',color=range_color[4], alpha=0.8)
     axis1.set_ylim(0, 3000)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
@@ -215,7 +223,6 @@ def get_CampaignType_analyze():
     for i, (xt, yt) in enumerate(zip(x_data, y_data1)):  
         axis1.text(xt, yt + 50, f'{yt:.2f}',size=size,ha='center', va='bottom', color=range_color[4])
 
-    # 绘制plot
     axis2.plot(x_data, y_data2,label='Conversion Rate', color=range_color[-1], marker="o", linewidth=2)
     axis2.set_ylabel('Conversion Rate(%)', color=color2,fontsize=size)
     axis2.tick_params('y', colors=color2, labelsize=size)
@@ -235,14 +242,14 @@ def get_CampaignType_analyze():
     fig.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
 
-# 不同营销类型的用户转化率波动最大接近10%，所以营销类型对客户是否转化有一定的影响。
-# “转化”类型的转化率最高，为 93.36%。
-get_CampaignType_analyze()
+# Conversion rates for different marketing types vary up to 10%.
+# The "Conversion" type has the highest conversion rate at 93.36%.
+campaign_type()
 
-# 营销花费分布
-#帮助了解广告支出的分布是否符合预期，例如是否有特定区间占比过高或过低。判断广告预算是否合理分布。
-def get_AdSpend_analyze1():
-    filename = 'fig/5-AdSpend_analyze1.png'
+# Distribution of marketing spending
+# Helps understand whether ad spending is distributed as expected, identifying imbalances.
+def ad_spend():
+    filename = 'fig/5-ad_spend.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis1.set_xlabel('Marketing Spend (USD)', color=color1, fontsize=size)
@@ -252,12 +259,12 @@ def get_AdSpend_analyze1():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     plt.title('Distribution of Marketing Spend', size=16)
     plt.savefig(filename, bbox_inches='tight')
-#分布均匀
-get_AdSpend_analyze1()
+# Spending is evenly distributed.
+ad_spend()
 
-# 
-def get_AdSpend_analyze2():
-    filename = 'fig/6-AdSpend_analyze2.png'
+# Distribution of marketing spending and conversion rates
+def ad_spend_conversion():
+    filename = 'fig/6-ad_spend_conversion.png'
     labels=['0-2000','2000-3000','3000-4000','4000-5000','5000-6000','6000-7000','7000-8000','8000-1000']
     df1['AdSpend_bin'] = pd.cut(df1['AdSpend'],bins=[0,2000,3000,4000,5000,6000,7000,8000,10000],labels=labels)
     grouped = df1.groupby(['AdSpend_bin', 'Conversion']).size().reset_index(name='counts')
@@ -270,12 +277,11 @@ def get_AdSpend_analyze2():
     x_data = labels
     y_data1 = merged['all'].values.tolist()
     y_data2 = merged['ratio'].values.tolist()
-    # 创建图像
+
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))# (left, bottom, width, height) 
     axis2 = axis1.twinx()
 
-    # 绘制bar
     axis1.bar(x_data, y_data1, label='Number of People',color=color1, alpha=0.8)
     axis1.set_ylim(0, 2000)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
@@ -284,7 +290,6 @@ def get_AdSpend_analyze2():
     for i, (xt, yt) in enumerate(zip(x_data, y_data1)):  
         axis1.text(xt, yt + 50, f'{yt:.2f}',size=size,ha='center', va='bottom', color=color1)
 
-    # 绘制plot
     axis2.plot(x_data, y_data2,label='Conversion Rate', color=range_color[-1], marker="o", linewidth=2)
     axis2.set_ylabel('Conversion Rate(%)', color=color2,fontsize=size)
     axis2.tick_params('y', colors=color2, labelsize=size)
@@ -303,12 +308,13 @@ def get_AdSpend_analyze2():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     fig.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
-# 不同营销花费的用户转化率波动比较明显，最大超过了10%，所以营销花费对客户是否转化有明显的影响。
-get_AdSpend_analyze2()
+# Fluctuations in conversion rates across different marketing spending ranges are significant, exceeding 10%. 
+# Thus, marketing spending has a notable impact on whether customers convert.
+ad_spend_conversion()
 
-# 网站点击率分布
-def get_ClickThroughRate_analyze1():
-    filename = 'fig/7-ClickThroughRate_analyze1.png'
+# Website Click-Through Rate Distribution
+def click_through_rate():
+    filename = 'fig/7-click_through_rate.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis1.set_xlabel('Website Click-Through Rate (%)', color=color1, fontsize=size)
@@ -318,10 +324,10 @@ def get_ClickThroughRate_analyze1():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     plt.title('Distribution of Website Click-Through Rate',size=16)
     plt.savefig(filename, bbox_inches='tight')
-get_ClickThroughRate_analyze1()
+click_through_rate()
 
-def get_ClickThroughRate_analyze2():
-    filename = 'fig/7-ClickThroughRate_analyze2.png'
+def click_through_rate_conversion():
+    filename = 'fig/7-click_through_rate_conversion.png'
     labels=['0-0.05','0.05-0.1','0.1-0.15','0.15-0.2','0.2-0.25','0.25-0.3']
     df1['ClickThroughRate_bin'] = pd.cut(df1['ClickThroughRate'],bins=[0,0.05,0.1,0.15,0.2,0.25,0.3],labels=labels)
     grouped = df1.groupby(['ClickThroughRate_bin', 'Conversion']).size().reset_index(name='counts')
@@ -334,12 +340,11 @@ def get_ClickThroughRate_analyze2():
     x_data = labels
     y_data1 = merged['all'].values.tolist()
     y_data2 = merged['ratio'].values.tolist()
-    # 创建图像
+
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))# (left, bottom, width, height) 
     axis2 = axis1.twinx()
 
-    # 绘制bar
     axis1.bar(x_data, y_data1, label='Number of People',color=range_color[1], alpha=0.8)
     axis1.set_ylim(0, 2000)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
@@ -348,7 +353,6 @@ def get_ClickThroughRate_analyze2():
     for i, (xt, yt) in enumerate(zip(x_data, y_data1)):  
         axis1.text(xt, yt + 50, f'{yt:.2f}',size=size,ha='center', va='bottom', color=range_color[1])
 
-    # 绘制plot
     axis2.plot(x_data, y_data2,label='Conversion Rate', color=range_color[-1], marker="o", linewidth=2)
     axis2.set_ylabel('Conversion Rate(%)', color=color2,fontsize=size)
     axis2.tick_params('y', colors=color2, labelsize=size)
@@ -367,12 +371,13 @@ def get_ClickThroughRate_analyze2():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     fig.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
-# 不同点击率的用户转化率波动同样比较明显，最大超过了10%，所以点击率对客户是否转化也有明显的影响。
-get_ClickThroughRate_analyze2()
+# Conversion rates fluctuate significantly across different click-through rate intervals, exceeding 10%.
+# Click-through rates have a clear impact on whether customers convert.
+click_through_rate_conversion()
 
-# 访问网站总次数分布
-def get_WebsiteVisits_analyze1():
-    filename = 'fig/8-WebsiteVisits_analyze1.png'
+# Distribution of total website visits
+def website_visits():
+    filename = 'fig/8-website_visits.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis1.set_xlabel('Total Number of Website Visits', color=color1, fontsize=size)
@@ -382,10 +387,10 @@ def get_WebsiteVisits_analyze1():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     plt.title('Distribution of Total Website Visits',size=16)
     plt.savefig(filename, bbox_inches='tight')
-get_WebsiteVisits_analyze1()
+website_visits()
 
-def get_WebsiteVisits_analyze2():
-    filename = 'fig/9-WebsiteVisits_analyze2.png'
+def website_visits_conversion():
+    filename = 'fig/9-website_visits_conversion.png'
     labels=['0-10','10-20','20-30','30-40','40-50']
     df1['WebsiteVisits_bin'] = pd.cut(df1['WebsiteVisits'],bins=[0,10,20,30,40,50],labels=labels)
     grouped = df1.groupby(['WebsiteVisits_bin', 'Conversion']).size().reset_index(name='counts')
@@ -398,12 +403,11 @@ def get_WebsiteVisits_analyze2():
     x_data = labels
     y_data1 = merged['all'].values.tolist()
     y_data2 = merged['ratio'].values.tolist()
-    # 创建图像
+
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))# (left, bottom, width, height) 
     axis2 = axis1.twinx()
 
-    # 绘制bar
     axis1.bar(x_data, y_data1, label='Number of People',color=range_color[2], alpha=0.8)
     axis1.set_ylim(0, 2500)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
@@ -412,7 +416,6 @@ def get_WebsiteVisits_analyze2():
     for i, (xt, yt) in enumerate(zip(x_data, y_data1)):  
         axis1.text(xt, yt + 50, f'{yt:.2f}',size=size,ha='center', va='bottom', color=range_color[2])
 
-    # 绘制plot
     axis2.plot(x_data, y_data2,label='Conversion Rate', color=range_color[-1], marker="o", linewidth=2)
     axis2.set_ylabel('Conversion Rate(%)', color=color2,fontsize=size)
     axis2.tick_params('y', colors=color2, labelsize=size)
@@ -431,12 +434,12 @@ def get_WebsiteVisits_analyze2():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     fig.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
-#不同客户访问网站总次数的用户转化率波动比较明显，最大超过了10%，所以客户访问网站总次数对客户是否转化有明显的影响。
-get_WebsiteVisits_analyze2()
+# Conversion rates fluctuate significantly with total website visits.
+website_visits_conversion()
 
-# 每次访问平均时间分布
-def get_TimeOnSite_analyze1():
-    filename = 'fig/10-TimeOnSite_analyze1.png'
+# Average time on site each visit.
+def time_on_site():
+    filename = 'fig/10-time_on_site.png'
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     axis1.set_xlabel('Average Time per Visit', color=color1, fontsize=size)
@@ -446,10 +449,10 @@ def get_TimeOnSite_analyze1():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     plt.title('Average Time per Visit Distribution',size=16)
     plt.savefig(filename, bbox_inches='tight')
-get_TimeOnSite_analyze1()
+time_on_site()
 
-def get_TimeOnSite_analyze2():
-    filename = 'fig/11-TimeOnSite_analyze2.png'
+def time_on_site_conversion():
+    filename = 'fig/11-time_on_site_conversion.png'
     labels=['0-3','3-6','6-9','9-12','12-15']
     df1['TimeOnSite_bin'] = pd.cut(df1['TimeOnSite'],bins=[0,3,6,9,12,15],labels=labels)
     grouped = df1.groupby(['TimeOnSite_bin', 'Conversion']).size().reset_index(name='counts')
@@ -462,12 +465,11 @@ def get_TimeOnSite_analyze2():
     x_data = labels
     y_data1 = merged['all'].values.tolist()
     y_data2 = merged['ratio'].values.tolist()
-    # 创建图像
+
     fig = plt.figure(figsize=(12, 6), dpi=80)
     axis1 = fig.add_axes((0.1, 0.1, 0.8, 0.8))# (left, bottom, width, height) 
     axis2 = axis1.twinx()
 
-    # 绘制bar
     axis1.bar(x_data, y_data1, label='Number of People',color=range_color[4], alpha=0.8)
     axis1.set_ylim(0, 2500)
     axis1.set_ylabel('Number of People', color=color1, fontsize=size)
@@ -476,7 +478,6 @@ def get_TimeOnSite_analyze2():
     for i, (xt, yt) in enumerate(zip(x_data, y_data1)):  
         axis1.text(xt, yt + 50, f'{yt:.2f}',size=size,ha='center', va='bottom', color=range_color[4])
 
-    # 绘制plot
     axis2.plot(x_data, y_data2,label='Conversion Rate', color=range_color[-1], marker="o", linewidth=2)
     axis2.set_ylabel('Conversion Rate(%)', color=color2,fontsize=size)
     axis2.tick_params('y', colors=color2, labelsize=size)
@@ -495,27 +496,15 @@ def get_TimeOnSite_analyze2():
     axis1.grid(True, which='both', linestyle='--', linewidth=0.5)  
     plt.tight_layout()  
     plt.savefig(filename, bbox_inches='tight')
-#不同客户每次访问网站时间的用户转化率波动比较明显，所以客户每次访问网站时间对客户是否转化有明显的影响。
-get_TimeOnSite_analyze2()
+# Significant fluctuations in conversion rates based on time spent on the site highlight its importance in conversion analysis.
+time_on_site_conversion()
 
-# 4 模型分析
-from sklearn.preprocessing import LabelEncoder
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.utils import resample
-from scipy.interpolate import interp1d
-from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve, auc
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-
-# 数据预处理
-# Drop columns first
+# --- Model Analysis ---
+# Data Preprocessing
 data = df.drop(columns=['AdvertisingPlatform', 'AdvertisingTool', 'CustomerID','Gender', 'CampaignChannel', 'CampaignType','Age'])
 
-
-def get_model_analyze(): 
-    # 绘制热力图
+ # Visualize correlations between features using a heatmap
+def model_heatmap(): 
     corrdf = data.corr()
     plt.figure(figsize=(12, 12), dpi=80)
     sns.heatmap(corrdf, annot=True,cmap="rainbow", linewidths=0.05,square=True,annot_kws={"size":8}, cbar_kws={'shrink': 0.8})
@@ -523,15 +512,17 @@ def get_model_analyze():
     plt.tight_layout()
     filename = 'fig/12-model_heatmap.png'
     plt.savefig(filename, bbox_inches='tight')
-get_model_analyze()
+model_heatmap()
 
-# 预测列
+# Drop columns first
+data = df.drop(columns=['AdvertisingPlatform', 'AdvertisingTool', 'CustomerID','Gender', 'CampaignChannel', 'CampaignType','Age'])
+
 x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
 x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7, stratify=y)
 
-# 4.1 KNN近邻算法模型
-# 找到最高精度的k值
+# KNN Model Analysis
+# Determine the optimal value of K for the KNN model
 knn_k_values = range(1, 21)
 knn_accuracies = []
 for k in knn_k_values:
@@ -565,7 +556,6 @@ test_accuracy = accuracy_score(y_test, knn_model_best_k.predict(x_test.values))
 print(f"KNN Train Accuracy: {train_accuracy}")
 print(f"KNN Test Accuracy: {test_accuracy}")
 
-# 评估
 y_pred = knn_model_best_k.predict(x_test.values)
 accuracy = accuracy_score(y_test, y_pred)
 conf_matrix = confusion_matrix(y_test, y_pred)
@@ -607,13 +597,14 @@ def get_model_roc_knn():
 get_model_roc_knn()
 
 
-# AUC = 1，是完美分类器，采用这个预测模型时，存在至少一个阈值能得出完美预测。绝大多数预测的场合，不存在完美分类器。
-# 0.5 < AUC < 1，优于随机猜测。这个分类器（模型）妥善设定阈值的话，能有预测价值。
-# AUC = 0.5，跟随机猜测一样（例：抛硬币），模型没有预测价值。
-# AUC < 0.5，比随机猜测还差。
+# Evaluate AUC values and their significance
+# AUC = 1: Perfect classifier. A model that achieves this score has perfect predictive capability.
+# 0.5 < AUC < 1: Better than random guessing. Indicates predictive value with proper threshold tuning.
+# AUC = 0.5: Equivalent to random guessing (e.g., flipping a coin); the model lacks predictive value.
+# AUC < 0.5: Worse than random guessing; the model's predictions are misleading.
 
 
-# 4.2 逻辑回归
+# Logistic Regression Model
 # Train Logistic Regression model
 x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
@@ -664,15 +655,14 @@ def get_model_roc_lr():
     print(f"Logistic Regression AUC: {auc_lr}")
 get_model_roc_lr()
 
-# 4.3 随机森林
+# Random Forest Model
+# Train and evaluate a Random Forest model for classification
 x_data = data.drop(columns=['Conversion'])
 y = data['Conversion']
 x_train, x_test, y_train, y_test = train_test_split(x_data, y, test_size=0.2, random_state=7, stratify=y)
 
 random_forest_model = RandomForestClassifier(random_state=15)
 random_forest_model.fit(x_train, y_train)
-
-# 评估
 
 y_pred = random_forest_model.predict(x_test)
 train_accuracy = accuracy_score(y_train, random_forest_model.predict(x_train))
@@ -694,7 +684,7 @@ def get_model_cm_rf():
     plt.savefig(filename, bbox_inches='tight')
 get_model_cm_rf()
 
-# ROC曲线
+# ROC curve
 def get_model_roc_rf():
     y_probs = random_forest_model.predict_proba(x_test.values)[:, 1]
     fpr, tpr, thresholds = roc_curve(y_test, y_probs)
@@ -717,13 +707,13 @@ def get_model_roc_rf():
     print(f"RF AUC: {auc}")
 get_model_roc_rf()
 
-# 模型性能稳定性
+# Stability Analysis for Random Forest Model
+# Evaluate model stability using bootstrap resampling
 def get_model_roc_rf_stability():
-    # 预测
     y_probs = random_forest_model.predict_proba(x_test)[:, 1]
     auc = roc_auc_score(y_test, y_probs)
 
-    # 计算原始ROC曲线的FPR, TPR, 和thresholds  
+    # Calculate the FPR, TPR, and thresholds of the original ROC curve
     fpr_orig, tpr_orig, thresholds_orig = roc_curve(y_test, y_probs)  
     print(f"RF Original FPR (first 5): {fpr_orig[:5]}")
     print(f"RF Original TPR (first 5): {tpr_orig[:5]}")
@@ -733,25 +723,22 @@ def get_model_roc_rf_stability():
     fpr_bootstraps = np.zeros((n_bootstraps, len(fpr_orig)))  
     tpr_bootstraps = np.zeros((n_bootstraps, len(tpr_orig)))  
 
-    # 计算多个ROC曲线  
+    # Calculate multiple ROC curves
     for i in range(n_bootstraps):  
         x_resample, y_resample = resample(x_test, y_test)  
         y_probs_resample = random_forest_model.predict_proba(x_resample)[:, 1]  
         fpr_resample, tpr_resample, _ = roc_curve(y_resample, y_probs_resample)  
-        # 线性插值
+        
         fpr_interp = interp1d(np.linspace(0, 1, len(fpr_resample)), fpr_resample, fill_value="extrapolate")(np.linspace(0, 1, len(fpr_orig)))  
         tpr_interp = interp1d(np.linspace(0, 1, len(tpr_resample)), tpr_resample, fill_value="extrapolate")(np.linspace(0, 1, len(tpr_orig)))  
         fpr_bootstraps[i] = fpr_interp  
         tpr_bootstraps[i] = tpr_interp  
 
-    # 计算置信区间  
-    # fpr_mean = np.mean(fpr_bootstraps, axis=0)
-    # fpr_ci = np.percentile(fpr_bootstraps, [2.5, 97.5], axis=0)
-    # tpr_mean = np.mean(tpr_bootstraps, axis=0)
+    # Calculate the 95% confidence interval for the TPR
     tpr_ci = np.percentile(tpr_bootstraps, [2.5, 97.5], axis=0)  
     print(f"95% Confidence Interval (TPR): Lower = {tpr_ci[0][:5]}, Upper = {tpr_ci[1][:5]}")
 
-    # 绘制ROC曲线和置信区间  
+    # Plot the ROC curve and confidence interval
     plt.figure(figsize=(12, 6), dpi=80)  
     plt.plot(fpr_orig, tpr_orig, color='blue', lw=2, label=f'AUC = {auc:.2f}')  
     plt.fill_between(fpr_orig, tpr_ci[0], tpr_ci[1], color='blue', alpha=0.2, label='95% Confidence Interval')  
@@ -768,24 +755,21 @@ def get_model_roc_rf_stability():
     plt.savefig(filename, bbox_inches='tight')
 get_model_roc_rf_stability()
 
-
-# 特征重要性
+# Feature Importance
 def get_feature_importances():
-    # 示例数据  
     feature_importances = random_forest_model.feature_importances_
     features_rf = pd.DataFrame({'Feature': x_train.columns, 'Importance': feature_importances})
     features_rf.sort_values(by='Importance', inplace=True)
 
     x_data = features_rf['Feature'].tolist()
     y_data = features_rf['Importance'].tolist()
-    # 创建条形图  
+
     fig = plt.figure(figsize=(12, 6), dpi=80)
     ax = fig.add_axes((0.1, 0.1, 0.8, 0.8))
     ax.set_xlim(0, 0.1)
     ax.tick_params('both', colors=color1, labelsize=size)
     bars = ax.barh(x_data, y_data, color=range_color[1])
 
-    # 在每个条形上方显示值  
     for bar in bars:  
         w = bar.get_width()
         ax.text(w+0.001, bar.get_y()+bar.get_height()/2, '%.4f'%w, ha='left', va='center')
@@ -799,14 +783,16 @@ def get_feature_importances():
     plt.savefig(filename, bbox_inches='tight')
 get_feature_importances()
 
-# 保存模型
+# Save the trained Random Forest model  
 model_filename = "random_forest_model.pkl"
-joblib.dump(random_forest_model, model_filename)
-print(f"Model saved to {model_filename}")
+def save_rf_model():
+    joblib.dump(random_forest_model, model_filename)
+    print(f"Model saved to {model_filename}")
+save_rf_model()
 
-# 测试加载模型
-loaded_model = joblib.load(model_filename)
-test_accuracy = accuracy_score(y_test, loaded_model.predict(x_test))
-print(f"Test Accuracy of loaded model: {test_accuracy}")
-
-print("test cloud build ci/cd")
+# Test loading and evaluating the saved model  
+def load_and_test_saved_model():
+    loaded_model = joblib.load("random_forest_model.pkl")
+    test_accuracy = accuracy_score(y_test, loaded_model.predict(x_test))
+    print(f"Test Accuracy of loaded model: {test_accuracy}")
+load_and_test_saved_model()
