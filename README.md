@@ -4,7 +4,7 @@ This project provides a containerized Flask-based API for predicting TMall's use
 
 ---
 
-### Prediction Endpoint from GPC
+### Prediction Endpoint from GCP
 
 **URL**: Open your browser or API testing tool (e.g., Postman) and send a `POST` request to `https://user-conversion-api-999732714550.us-east1.run.app/predict`
 
@@ -36,6 +36,7 @@ This project provides a containerized Flask-based API for predicting TMall's use
     "LoyaltyPoints": 4474
 }
 ```
+
 **Expected Output 1**:  
 ```json
 {
@@ -43,8 +44,58 @@ This project provides a containerized Flask-based API for predicting TMall's use
     "prediction": 0
 }
 ```
-
 **Sample Input 2**:  
+```json
+{
+    "Income": 55972.0,
+    "AdSpend": 7254.022157320001,
+    "ClickThroughRate": 0.083025001631625,
+    "ConversionRate": 0.015726698375027437,
+    "WebsiteVisits": 38,
+    "PagesPerVisit": 5.447257523959778,
+    "TimeOnSite": 6.134174721060454,
+    "SocialShares": 79,
+    "EmailOpens": 2,
+    "EmailClicks": 8,
+    "PreviousPurchases": 1,
+    "LoyaltyPoints": 612
+}
+```
+**Expected Output 2**:  
+```json
+{
+    "confidence": 0.82,
+    "prediction": 0
+}
+```
+
+**Sample Input 3**:  
+```json
+{
+    "Income": 109779.0,
+    "AdSpend": 8383.984491524046,
+    "ClickThroughRate": 0.28263938781591186,
+    "ConversionRate": 0.17492572533137893,
+    "WebsiteVisits": 6,
+    "PagesPerVisit": 2.384030881810251,
+    "TimeOnSite": 12.561754154488309,
+    "SocialShares": 97,
+    "EmailOpens": 14,
+    "EmailClicks": 2,
+    "PreviousPurchases": 3,
+    "LoyaltyPoints": 467
+}
+```   
+
+**Expected Output 3**:  
+```json
+{
+    "confidence": 0.79,
+    "prediction": 1
+}
+```
+
+**Sample Input 4**:  
 ```json
 {
   "Income": 136912,
@@ -62,7 +113,7 @@ This project provides a containerized Flask-based API for predicting TMall's use
 }
 ```
 
-**Expected Output 2**:  
+**Expected Output 4**:  
 ```json
 {
     "confidence": 0.94,
