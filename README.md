@@ -7,7 +7,16 @@ This project provides a containerized Flask-based API for predicting TMall's use
 ### Team Members
 Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
 
+### Link To Final Presentation
+
+[Presentation Link](https://docs.google.com/presentation/d/1cb-_aNdjuvIsOtbXhIDQndhNEeoCvosx/edit#slide=id.p1)
+
+### Link To Final Report
+
+[Report Link](https://docs.google.com/document/d/1Ts4IfIu7GuhiY29eZIie_85A4pEZpQRS0t2uK3otXqI/edit?tab=t.0)
+
 ---
+
 ### Prediction Endpoint from GCP
 
 **URL**: Open your browser or API testing tool (e.g., Postman) and send a `POST` request to `https://user-conversion-api-999732714550.us-east1.run.app/predict`
