@@ -29,10 +29,13 @@ Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
   "Content-Type": "application/json"
 }
 ```
-
+**Use Following CURL Commands In Terminals** 
 **Sample Input 1**:  
-```json
-{
+```bash
+curl -X POST \
+  https://user-conversion-api-999732714550.us-east1.run.app/predict \
+  -H "Content-Type: application/json" \
+  -d '{
     "Income": 39192,
     "CampaignChannel": 0,
     "CampaignType": 0,
@@ -47,7 +50,7 @@ Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
     "EmailClicks": 1,
     "PreviousPurchases": 1,
     "LoyaltyPoints": 4474
-}
+  }'
 ```
 
 **Expected Output 1**:  
@@ -58,8 +61,11 @@ Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
 }
 ```
 **Sample Input 2**:  
-```json
-{
+```bash
+curl -X POST \
+  https://user-conversion-api-999732714550.us-east1.run.app/predict \
+  -H "Content-Type: application/json" \
+  -d '{
     "Income": 55972.0,
     "AdSpend": 7254.022157320001,
     "ClickThroughRate": 0.083025001631625,
@@ -72,7 +78,7 @@ Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
     "EmailClicks": 8,
     "PreviousPurchases": 1,
     "LoyaltyPoints": 612
-}
+  }'
 ```
 **Expected Output 2**:  
 ```json
@@ -83,8 +89,11 @@ Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
 ```
 
 **Sample Input 3**:  
-```json
-{
+```bash
+curl -X POST \
+  https://user-conversion-api-999732714550.us-east1.run.app/predict \
+  -H "Content-Type: application/json" \
+  -d '{
     "Income": 109779.0,
     "AdSpend": 8383.984491524046,
     "ClickThroughRate": 0.28263938781591186,
@@ -97,7 +106,7 @@ Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
     "EmailClicks": 2,
     "PreviousPurchases": 3,
     "LoyaltyPoints": 467
-}
+  }'
 ```   
 
 **Expected Output 3**:  
@@ -109,21 +118,24 @@ Lingling Deng, Chih-Yun Chang, Yao Chen, Lixing Chen
 ```
 
 **Sample Input 4**:  
-```json
-{
-  "Income": 136912,
-  "AdSpend": 6497.870068417766,
-  "ClickThroughRate": 0.04391851073538301,
-  "ConversionRate": 0.08803141207288108,
-  "WebsiteVisits": 0,
-  "PagesPerVisit": 2.399016527783845,
-  "TimeOnSite": 7.3968025807960585,
-  "SocialShares": 19,
-  "EmailOpens": 6,
-  "EmailClicks": 9,
-  "PreviousPurchases": 4,
-  "LoyaltyPoints": 688
-}
+```bash
+curl -X POST \
+  https://user-conversion-api-999732714550.us-east1.run.app/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "Income": 136912,
+    "AdSpend": 6497.870068417766,
+    "ClickThroughRate": 0.04391851073538301,
+    "ConversionRate": 0.08803141207288108,
+    "WebsiteVisits": 0,
+    "PagesPerVisit": 2.399016527783845,
+    "TimeOnSite": 7.3968025807960585,
+    "SocialShares": 19,
+    "EmailOpens": 6,
+    "EmailClicks": 9,
+    "PreviousPurchases": 4,
+    "LoyaltyPoints": 688
+  }'
 ```
 
 **Expected Output 4**:  
